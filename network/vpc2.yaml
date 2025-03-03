@@ -1,0 +1,136 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  This project is to create a vpc.
+  This vpc should have a public and private subnet.
+  An EC2 instance should be launched in both subnets. 
+
+Resources:
+  EffulgencetechVPC:
+    Type: 'AWS::EC2::VPC'
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      Tags:
+        - Key: stack
+          Value: production
+
+  EffulgencetechVPCIGW:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+      - Key: stack
+        Value: production
+  
+  EffulgencetechVPCIGWAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: 
+        Ref: EffulgencetechVPC
+      InternetGatewayId:
+        Ref: EffulgencetechVPCIGW
+
+  EffulgencetechVPCpubSN: 
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: us-east-1a
+      VpcId: !Ref EffulgencetechVPC
+      CidrBlock: 10.0.113.0/24
+      Tags:
+        - Key: project
+          Value: effulgencepublicsubnet
+
+  EffulgencetechVPCprivSN: 
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: us-east-1a
+      VpcId: !Ref EffulgencetechVPC
+      CidrBlock: 10.0.16.0/24
+      Tags:
+        - Key: project
+          Value: effulgencepublicsubnet
+
+  EffulgencetechVPCpubSNRT:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref EffulgencetechVPC
+      Tags:
+        - Key: project
+          Value: effulgencePubroutetable
+
+  PublicSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: EffulgencetechVPCpubSN
+      RouteTableId:
+        Ref: EffulgencetechVPCpubSNRT
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    Properties: 
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref EffulgencetechVPCIGW
+      RouteTableId: !Ref EffulgencetechVPCpubSNRT
+
+
+  EffulgencetechVPCprivSNRT:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref EffulgencetechVPC
+      Tags:
+        - Key: project
+          Value: effulgencePrivroutetable
+  
+       
+  PrivateSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: EffulgencetechVPCprivSN
+      RouteTableId:
+        Ref: EffulgencetechVPCprivSNRT
+
+  securityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable HTTP access via port 80
+      VpcId: !Ref EffulgencetechVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp: 0.0.0.0/0 
+
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: 0.0.0.0/0
+Outputs:
+  VPCID:
+    Value: !Ref EffulgencetechVPC
+    Description: VPC ID
+  
+  PublicSubnetId:
+    Value: !Ref EffulgencetechVPCpubSN
+    Description: Public Subnet ID
+
+  PrivateSubnetId:
+    Value: !Ref EffulgencetechVPCprivSN
+    Description: Private Subnet ID
+
+  SecurityGroupId:
+    Value: !Ref securityGroup
+    Description: Security Group ID
+  
+  VPCName:
+    Value: EffulgencetechVPC
+    Description: VPC Name
+  
+  PrivateRouteTable:
+    Value: !Ref EffulgencetechVPCprivSNRT
+    Description: Private Route Table ID
+  
+  PublicRouteTable:
+    Value: !Ref EffulgencetechVPCpubSNRT
+    Description: Public Route Table ID
